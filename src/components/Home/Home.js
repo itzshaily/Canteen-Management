@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import ProductList from "../ProductList/ProductList";
 import CartModal from "../CartModal/CartModal";
@@ -8,18 +8,21 @@ import Footer from "../Footer/Footer";
 import AdminPanel from "../AdminPanel/AdminPanel";
 import UserOrderHistory from "./UserOrderHistory";
 import useProducts from "../../hooks/useProducts";
-import { ref, update } from "firebase/database";
+import { ref, update, get } from "firebase/database";
 import { auth, database } from "../../firebase";
 import { signOut } from "firebase/auth";
-import { Toast, Form, InputGroup, Container } from "react-bootstrap";
+import { Toast, Form, InputGroup, Container, Button } from "react-bootstrap";
 import { useAuth } from "../../AuthContext";
 import jsPDF from "jspdf";
 import useAdmin from "../../hooks/useAdmin";
+import Logo from '../Logo/Logo';
 
 const Home = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { products, updateProductQuantity } = useProducts();
+  const { products, updateProductQuantity, loading, error } = useProducts();
+  
+  // State variables
   const [cart, setCart] = useState([]);
   const [showCartModal, setShowCartModal] = useState(false);
   const [originalQuantities, setOriginalQuantities] = useState({});
@@ -32,13 +35,64 @@ const Home = () => {
   const [showOrderHistory, setShowOrderHistory] = useState(false);
   const isAdmin = useAdmin();
 
+  // ProfileAvatar component
+  const ProfileAvatar = () => (
+    <img
+      src={`https://ui-avatars.com/api/?name=${currentUser?.email || 'User'}&background=36b1f0&color=fff`}
+      alt="profile"
+      className="rounded-circle shadow-sm border border-3 border-info"
+      width="36"
+      height="36"
+      style={{ objectFit: "cover" }}
+    />
+  );
+
+  // Debug Firebase connection
+  const testFirebase = async () => {
+    try {
+      console.log("🔥 Testing Firebase connection...");
+      const productsRef = ref(database, "products");
+      const snapshot = await get(productsRef);
+      
+      if (snapshot.exists()) {
+        console.log("🔥 Firebase test SUCCESS:", snapshot.val());
+        alert("Firebase connection works! Check console for data.");
+      } else {
+        console.log("🔥 Firebase test - No data found");
+        alert("Firebase connected but no products found");
+      }
+    } catch (error) {
+      console.error("🔥 Firebase test ERROR:", error);
+      alert("Firebase connection failed: " + error.message);
+    }
+  };
+
+  // DEBUG: Log products when they load
+  useEffect(() => {
+    console.log("🏠 Home component - Products:", products);
+    console.log("🏠 Home component - Loading:", loading);
+    console.log("🏠 Home component - Error:", error);
+    console.log("🏠 Home component - Products type:", typeof products);
+    console.log("🏠 Home component - Is array:", Array.isArray(products));
+    
+    if (products && Array.isArray(products)) {
+      products.forEach((product, index) => {
+        console.log(`🏠 Product ${index}:`, product);
+        if (!product || !product.name) {
+          console.error('🏠 Product missing name:', product);
+        }
+      });
+    }
+  }, [products, loading, error]);
+
   useEffect(() => {
     if (products && products.length > 0) {
       const updatedQuantities = products.reduce((acc, product) => {
-        acc[product.id] = product.quantity;
+        if (product && product.id) {
+          acc[product.id] = product.quantity || 0;
+        }
         return acc;
       }, {});
-
       setOriginalQuantities(updatedQuantities);
     }
   }, [products]);
@@ -50,12 +104,12 @@ const Home = () => {
   }, [currentUser, navigate]);
 
   useEffect(() => {
-    // Check if user is logged in and update admin status
     if (!currentUser) {
       setShowAdmin(false);
     }
   }, [currentUser]);
 
+  // PDF Generation
   const generatePDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
@@ -65,17 +119,13 @@ const Home = () => {
     // Header
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    doc.text("CANTEEN RECEIPT", pageWidth / 2, 15, { align: "center" });
+    doc.text("TASTYBITES RECEIPT", pageWidth / 2, 15, { align: "center" });
 
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
     doc.text(`Date: ${date}`, 10, 30);
     doc.text(`Time: ${time}`, 10, 37);
-    doc.text(
-      `Customer: ${currentUser?.displayName || currentUser?.email}`,
-      10,
-      44
-    );
+    doc.text(`Customer: ${currentUser?.displayName || currentUser?.email}`, 10, 44);
 
     // Line separator
     doc.setLineWidth(0.5);
@@ -92,13 +142,13 @@ const Home = () => {
     doc.setFont("helvetica", "normal");
     let y = 70;
     cart.forEach((product) => {
-      doc.text(product.name, 10, y);
-      doc.text(product.quantity.toString(), 120, y, { align: "right" });
-      doc.text(product.price.toFixed(2), 140, y, { align: "right" });
-      doc.text((product.quantity * product.price).toFixed(2), 190, y, {
-        align: "right",
-      });
-      y += 10;
+      if (product && product.name) {
+        doc.text(product.name, 10, y);
+        doc.text(product.quantity.toString(), 120, y, { align: "right" });
+        doc.text(product.price.toFixed(2), 140, y, { align: "right" });
+        doc.text((product.quantity * product.price).toFixed(2), 190, y, { align: "right" });
+        y += 10;
+      }
     });
 
     // Footer
@@ -106,23 +156,23 @@ const Home = () => {
     doc.line(10, totalY - 5, pageWidth - 10, totalY - 5);
     doc.setFont("helvetica", "bold");
     doc.text("Total Amount:", 140, totalY, { align: "right" });
-    doc.text(`$${calculateTotal().toFixed(2)}`, 190, totalY, {
-      align: "right",
-    });
+    doc.text(`₹${calculateTotal().toFixed(2)}`, 190, totalY, { align: "right" });
 
     // Thank you note
     doc.setFontSize(14);
     doc.setFont("helvetica", "italic");
-    doc.text("Thank you for dining with us!", pageWidth / 2, totalY + 20, {
-      align: "center",
-    });
+    doc.text("Thank you for dining with us!", pageWidth / 2, totalY + 20, { align: "center" });
 
-    doc.save(
-      `Canteen-Bill-${date.replace(/\//g, "-")}-${time.replace(/:/g, "-")}.pdf`
-    );
+    doc.save(`TastyBites-Bill-${date.replace(/\//g, "-")}-${time.replace(/:/g, "-")}.pdf`);
   };
 
+  // Cart functions
   const addToCart = (product) => {
+    if (!product || !product.id) {
+      console.error('Invalid product:', product);
+      return;
+    }
+
     setCart((prevCart) => {
       const productInCart = prevCart.find((p) => p.id === product.id);
       if (productInCart) {
@@ -136,14 +186,10 @@ const Home = () => {
   };
 
   const incrementQuantity = (productId) => {
-    const availableQuantity =
-      originalQuantities[productId] -
-      (cart.find((p) => p.id === productId)?.quantity || 0);
+    const availableQuantity = originalQuantities[productId] - (cart.find((p) => p.id === productId)?.quantity || 0);
     if (availableQuantity > 0) {
       setCart((prevCart) =>
-        prevCart.map((p) =>
-          p.id === productId ? { ...p, quantity: p.quantity + 1 } : p
-        )
+        prevCart.map((p) => p.id === productId ? { ...p, quantity: p.quantity + 1 } : p)
       );
     }
   };
@@ -152,45 +198,46 @@ const Home = () => {
     const productInCart = cart.find((p) => p.id === productId);
     if (productInCart && productInCart.quantity > 1) {
       setCart((prevCart) =>
-        prevCart.map((p) =>
-          p.id === productId ? { ...p, quantity: p.quantity - 1 } : p
-        )
+        prevCart.map((p) => p.id === productId ? { ...p, quantity: p.quantity - 1 } : p)
       );
     }
   };
 
   const removeFromCart = (product) => {
-    setCart((prevCart) => prevCart.filter((p) => p.id !== product.id));
+    if (product && product.id) {
+      setCart((prevCart) => prevCart.filter((p) => p.id !== product.id));
+    }
   };
 
-  const clearCart = () => {
-    setCart([]);
-  };
+  const clearCart = () => setCart([]);
 
   const calculateTotal = () => {
-    return cart.reduce(
-      (total, product) => total + product.price * product.quantity,
-      0
-    );
+    return cart.reduce((total, product) => {
+      if (product && typeof product.price === 'number' && typeof product.quantity === 'number') {
+        return total + product.price * product.quantity;
+      }
+      return total;
+    }, 0);
   };
 
+  // Checkout function
   const checkout = () => {
     cart.forEach((product) => {
-      const originalQuantity = originalQuantities[product.id];
-      const updatedQuantity = originalQuantity - product.quantity;
-
-      const productRef = ref(database, `products/${product.id}`);
-      update(productRef, { quantity: updatedQuantity })
-        .then(() => {
-          updateProductQuantity(product.id, updatedQuantity);
-          setOriginalQuantities((prev) => ({
-            ...prev,
-            [product.id]: updatedQuantity,
-          }));
-        })
-        .catch((error) =>
-          console.error("Error updating product quantity:", error)
-        );
+      if (product && product.id && originalQuantities[product.id] !== undefined) {
+        const originalQuantity = originalQuantities[product.id];
+        const updatedQuantity = originalQuantity - product.quantity;
+        const productRef = ref(database, `products/${product.id}`);
+        
+        update(productRef, { quantity: Math.max(0, updatedQuantity) })
+          .then(() => {
+            updateProductQuantity(product.id, Math.max(0, updatedQuantity));
+            setOriginalQuantities((prev) => ({
+              ...prev,
+              [product.id]: Math.max(0, updatedQuantity),
+            }));
+          })
+          .catch((error) => console.error("Error updating product quantity:", error));
+      }
     });
 
     // Record sales data
@@ -202,6 +249,7 @@ const Home = () => {
         total: calculateTotal(),
         items: cart.map((item) => ({
           id: item.id,
+          name: item.name,
           quantity: item.quantity,
           price: item.price,
         })),
@@ -216,19 +264,39 @@ const Home = () => {
     setShowCartModal(false);
     setShowCheckoutToast(true);
     setTimeout(() => setShowCheckoutToast(false), 3000);
-
     generatePDF();
   };
 
-  const filteredProducts = products
-    ? products.filter((product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
+  // Safe product filtering
+  const filteredProducts = React.useMemo(() => {
+    if (!products || !Array.isArray(products)) {
+      console.warn('🏠 Products not loaded or not an array:', products);
+      return [];
+    }
+    
+    if (!searchTerm || searchTerm.trim() === '') {
+      return products;
+    }
+    
+    return products.filter((product) => {
+      try {
+        if (!product || !product.name) {
+          console.warn('🏠 Product missing name:', product);
+          return false;
+        }
+        return product.name.toLowerCase().includes(searchTerm.toLowerCase());
+      } catch (error) {
+        console.error('🏠 Error filtering product:', product, error);
+        return false;
+      }
+    });
+  }, [products, searchTerm]);
 
   const handleProductClick = (product) => {
-    setSelectedProduct(product);
-    setShowProductDetailModal(true);
+    if (product) {
+      setSelectedProduct(product);
+      setShowProductDetailModal(true);
+    }
   };
 
   const handleLogout = async () => {
@@ -254,61 +322,81 @@ const Home = () => {
     setShowOrderHistory(false);
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <Container className="text-center mt-5">
+        <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <h4 className="mt-3">Loading products...</h4>
+        <p className="text-muted">Please wait while we fetch the menu...</p>
+      </Container>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Container className="text-center mt-5">
+        <div className="alert alert-danger">
+          <h4>⚠️ Error loading products</h4>
+          <p><strong>Error:</strong> {error}</p>
+          <div className="mt-3">
+            <button className="btn btn-primary me-2" onClick={() => window.location.reload()}>
+              🔄 Retry
+            </button>
+            <button className="btn btn-info" onClick={testFirebase}>
+              🔥 Test Firebase Connection
+            </button>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
   return (
     <>
-      <header className="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+      <header 
+        className="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column" 
+        style={{ background: "linear-gradient(135deg, #e0f7fa, #ffffff)" }}
+      >
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-center">
-          <h3 className="fw-bold mb-3 mb-md-0 display-4">
-            <Link
-              to="/"
-              className="text-decoration-none text-dark"
-              onClick={() => {
-                setShowAdmin(false);
-                setShowOrderHistory(false);
-              }}
-            >
-              Canteen
-            </Link>
-          </h3>
-          <nav className="nav nav-masthead d-flex align-items-center gap-2">
-            <button
-              onClick={handleHomeClick}
-              className="btn btn-link text-decoration-none text-dark fw-bold p-2"
-            >
-              Home
-            </button>
-            <button
+          <Logo 
+            onClick={handleHomeClick}
+            size="medium"
+          />
+          
+          <nav className="nav nav-masthead d-flex align-items-center gap-3">
+            <Button variant="link" onClick={handleHomeClick} className="nav-btn">
+              <i className="bi bi-house-door-fill me-2"></i> Home
+            </Button>
+            <Button
+              variant="link"
               onClick={() => {
                 setShowOrderHistory(true);
                 setShowAdmin(false);
               }}
-              className="btn btn-link text-decoration-none text-dark fw-bold p-2"
+              className="nav-btn"
             >
-              My Orders
-            </button>
+              <i className="bi bi-clock-history me-2"></i> My Orders
+            </Button>
             {isAdmin && (
-              <button
-                onClick={handleAdminClick}
-                className="btn btn-link text-decoration-none text-dark fw-bold p-2"
-              >
-                Admin
-              </button>
+              <Button variant="link" onClick={handleAdminClick} className="nav-btn">
+                <i className="bi bi-shield-lock-fill me-2"></i> Admin
+              </Button>
             )}
             {currentUser && (
-              <div className="d-flex align-items-center fw-bold gap-2">
-                <img
-                  src={`https://ui-avatars.com/api/?name=${currentUser.email}&background=random`}
-                  alt="profile"
-                  className="rounded-circle"
-                  width="30"
-                  height="30"
-                />
-                <button
-                  className="rounded-5 btn button btn-sm btn-danger fw-bold"
+              <div className="d-flex align-items-center fw-bold gap-3">
+                <ProfileAvatar />
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="rounded-pill fw-bold logout-btn"
                   onClick={handleLogout}
                 >
-                  Logout
-                </button>
+                  <i className="bi bi-box-arrow-right me-1"></i> Logout
+                </Button>
               </div>
             )}
           </nav>
@@ -320,7 +408,7 @@ const Home = () => {
           <Toast
             show={!!logoutError}
             onClose={() => setLogoutError("")}
-            className="position-fixed top-0 end-0 m-3"
+            className="position-fixed top-0 end-0 m-3 shadow"
             bg="danger"
             text="white"
           >
@@ -334,50 +422,58 @@ const Home = () => {
           <UserOrderHistory />
         ) : (
           <>
+
             <div className="d-flex justify-content-between align-items-center mb-4 row">
               <h1 className="fw-bold col">Today's items</h1>
               <Form.Group className="w-100 w-md-50 my-auto col">
-                <InputGroup>
-                  <InputGroup.Text>
-                    <i className="fas fa-search"></i>
+                <InputGroup className="shadow-sm rounded-pill">
+                  <InputGroup.Text style={{ background: "#e0f7fa", borderRadius: "50px 0 0 50px" }}>
+                    <i className="bi bi-search"></i>
                   </InputGroup.Text>
                   <Form.Control
                     type="text"
                     placeholder="Search products..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ borderRadius: "0 50px 50px 0" }}
                   />
                 </InputGroup>
               </Form.Group>
             </div>
+            
             {cart.length > 0 && (
-              <button
-                className="btn btn-primary rounded-4 fw-bold"
+              <Button
+                variant="primary"
+                className="rounded-pill fw-bold shadow mb-4"
                 onClick={() => setShowCartModal(true)}
               >
-                <i className="fas fa-shopping-cart me-2"></i>
+                <i className="bi bi-cart3 me-2"></i>
                 View Cart ({cart.length})
-              </button>
+              </Button>
             )}
+
             {filteredProducts.length > 0 ? (
               <ProductList
                 products={filteredProducts.map((p) => ({
                   ...p,
-                  quantity:
-                    originalQuantities[p.id] -
-                    (cart.find((cp) => cp.id === p.id)?.quantity || 0),
+                  quantity: Math.max(0,
+                    (originalQuantities[p.id] || 0) -
+                    (cart.find((cp) => cp.id === p.id)?.quantity || 0)
+                  ),
                 }))}
                 addToCart={addToCart}
                 onProductClick={handleProductClick}
               />
             ) : (
               <div className="text-center mt-5">
-                <h3>Sorry, we're currently not serving any items.</h3>
+                <i className="bi bi-emoji-frown text-muted" style={{ fontSize: "4rem" }}></i>
+                <h3 className="mt-3">Sorry, we're currently not serving any items.</h3>
                 <p className="text-muted">
                   Please check back later or contact{" "}
                   <a
                     className="text-decoration-none"
-                    href="https://github.com/SauRavRwT/"
+                    href="https://github.com/itzshaily/"
+                    style={{ color: "#667eea" }}
                   >
                     maintainer
                   </a>
@@ -385,6 +481,7 @@ const Home = () => {
                 </p>
               </div>
             )}
+
             <CartModal
               show={showCartModal}
               handleClose={() => setShowCartModal(false)}
@@ -396,20 +493,25 @@ const Home = () => {
               calculateTotal={calculateTotal}
               checkout={checkout}
             />
+            
             <ProductDetailModal
               show={showProductDetailModal}
               handleClose={() => setShowProductDetailModal(false)}
               product={selectedProduct}
               addToCart={addToCart}
             />
+            
             <Toast
               show={showCheckoutToast}
               onClose={() => setShowCheckoutToast(false)}
-              className="position-fixed bottom-0 end-0 m-3"
+              className="position-fixed bottom-0 end-0 m-3 shadow"
               delay={3000}
               autohide
             >
-              <Toast.Body>Checkout successful!</Toast.Body>
+              <Toast.Body>
+                <i className="bi bi-check-circle me-2 text-success"></i>
+                Checkout successful!
+              </Toast.Body>
             </Toast>
           </>
         )}

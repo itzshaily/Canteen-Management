@@ -61,3 +61,7 @@ const ChartComponent = ({ data, title }) => (
 );
 
 export default ChartComponent;
+
+
+// This component displays a visually attractive, interactive pie chart for any numeric data 
+// (e.g. profit per product), wrapped in a Bootstrap card.

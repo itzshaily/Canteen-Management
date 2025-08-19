@@ -38,3 +38,14 @@ const Cart = ({ cart, removeFromCart, clearCart, calculateTotal }) => {
 };
 
 export default Cart;
+
+
+//Each product is shown with its name and price.
+
+//Remove button: Lets the user remove a specific product.
+
+//Total price: Calculated and shown below the list.
+
+//Clear Cart button: Lets the user empty the entire cart with one click.
+
+//Uses Bootstrap card and list classes for styling.

@@ -2,9 +2,10 @@
  // that verifies if a logged‑in user is an admin for your canteen management website.
 // Imports the Firebase Functions SDK.
 const functions = require('firebase-functions');
-
-const admin = require('firebase-admin');
-admin.initializeApp();
+//  Imports the Firebase Admin SDK.
+const admin = require('firebase-admin');  
+// Initializes the Admin SDK so it knows which Firebase project to connect to.
+admin.initializeApp();   
 
 exports.isUserAdmin = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
@@ -17,3 +18,11 @@ exports.isUserAdmin = functions.https.onCall(async (data, context) => {
   
   return { isAdmin: snapshot.exists() };
 });
+
+//User calls isUserAdmin from frontend.
+
+//Cloud Function checks if the user is logged in.
+
+//If logged in → fetches admins/{uid} from Firebase Realtime Database.
+
+//Returns { isAdmin: true/false } depending on whether that record exists.

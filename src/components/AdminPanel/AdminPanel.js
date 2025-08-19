@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import useAdmin from '../../hooks/useAdmin';
 
 const AdminPanel = () => {
+  // State & Helpers
   const navigate = useNavigate();
   const isAdmin = useAdmin();
 
@@ -225,3 +226,16 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
+
+
+//AdminPanel is a secure, real-time dashboard for your canteen admins.
+
+//Admins see sales charts, best sellers, management forms, and full order history.
+
+//Non-admins only see their own order history.
+
+//Real-time synced: Data always up-to-date with Firebase.
+
+//Computes profits and best sellers on the fly, using sales and product cost data.
+
+//Safe: Protects admin pages from unauthorized access.

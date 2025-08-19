@@ -28,3 +28,10 @@ const BestSellersComponent = ({ bestSellers }) => (
 );
 
 export default BestSellersComponent;
+
+
+//BestSellersComponent is a simple presentational component.
+
+//It receives a list of best-seller products and their sold quantities, and displays them in a styled, responsive table within a Bootstrap card.
+
+//No internal logic, API calls, or state: all data is received as props.

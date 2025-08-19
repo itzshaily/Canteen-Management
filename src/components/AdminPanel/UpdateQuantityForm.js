@@ -78,3 +78,12 @@ const UpdateQuantityForm = ({ products, setProducts }) => {
 };
 
 export default UpdateQuantityForm;
+
+
+// This component provides admins a quick way to adjust stock quantity for any product.
+
+//It ensures no negative quantities occur and immediately updates Firebase.
+
+//Uses controlled form components for seamless user experience.
+
+//Relies on the products prop to read existing quantities and populate the dropdown.

@@ -1,0 +1,292 @@
+.logo-container {
+  text-decoration: none !important;
+  color: inherit;
+  display: inline-block;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logo-container:hover {
+  text-decoration: none !important;
+  color: inherit;
+  transform: scale(1.05);
+}
+
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+
+/* Logo Icon Styles */
+.logo-icon {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plate {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(145deg, #ff6b6b, #ee5a24);
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 8px 25px rgba(238, 90, 36, 0.3);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logo-container:hover .plate {
+  transform: rotate(360deg);
+  box-shadow: 0 12px 35px rgba(238, 90, 36, 0.4);
+}
+
+.food-item {
+  position: absolute;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.food-1 {
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(145deg, #ffa502, #ff6348);
+  top: 15px;
+  left: 19px;
+}
+
+.food-2 {
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(145deg, #7bed9f, #2ed573);
+  top: 20px;
+  right: 12px;
+}
+
+.food-3 {
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(145deg, #70a1ff, #5352ed);
+  bottom: 15px;
+  left: 15px;
+}
+
+.logo-container:hover .food-1 {
+  transform: scale(1.2) rotate(180deg);
+}
+
+.logo-container:hover .food-2 {
+  transform: scale(1.3) rotate(-180deg);
+}
+
+.logo-container:hover .food-3 {
+  transform: scale(1.1) rotate(90deg);
+}
+
+/* Steam Animation */
+.steam {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50px;
+  opacity: 0;
+  animation: steam-rise 2s infinite ease-in-out;
+}
+
+.steam-1 {
+  width: 3px;
+  height: 15px;
+  top: -20px;
+  left: 20px;
+  animation-delay: 0s;
+}
+
+.steam-2 {
+  width: 2px;
+  height: 12px;
+  top: -18px;
+  left: 28px;
+  animation-delay: 0.3s;
+}
+
+.steam-3 {
+  width: 2px;
+  height: 10px;
+  top: -15px;
+  left: 35px;
+  animation-delay: 0.6s;
+}
+
+@keyframes steam-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-15px) scale(0.8);
+  }
+}
+
+.logo-container:hover .steam {
+  animation-duration: 1s;
+}
+
+/* Brand Text Styles */
+.brand-text {
+  text-align: left;
+}
+
+.brand-name {
+  margin: 0;
+  line-height: 1;
+  font-weight: 900;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif;
+}
+
+.brand-main {
+  font-size: 2.2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -1px;
+  transition: all 0.3s ease;
+}
+
+.brand-sub {
+  font-size: 1.8rem;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  margin-top: -8px;
+  transition: all 0.3s ease;
+}
+
+.brand-tagline {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 2px;
+  transition: all 0.3s ease;
+}
+
+.logo-container:hover .brand-tagline {
+  color: #667eea;
+  letter-spacing: 3px;
+}
+
+/* Size Variations */
+.logo-small .logo-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.logo-small .plate {
+  width: 35px;
+  height: 35px;
+}
+
+.logo-small .brand-main {
+  font-size: 1.5rem;
+}
+
+.logo-small .brand-sub {
+  font-size: 1.2rem;
+}
+
+.logo-small .brand-tagline {
+  font-size: 0.6rem;
+}
+
+.logo-large .logo-icon {
+  width: 80px;
+  height: 80px;
+}
+
+.logo-large .plate {
+  width: 70px;
+  height: 70px;
+}
+
+.logo-large .brand-main {
+  font-size: 3rem;
+}
+
+.logo-large .brand-sub {
+  font-size: 2.5rem;
+}
+
+.logo-large .brand-tagline {
+  font-size: 0.9rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .logo-wrapper {
+    gap: 0.5rem;
+  }
+  
+  .brand-name {
+    flex-direction: row;
+    gap: 0.3rem;
+    align-items: baseline;
+  }
+  
+  .brand-main {
+    font-size: 1.8rem;
+  }
+  
+  .brand-sub {
+    font-size: 1.4rem;
+    margin-top: 0;
+  }
+  
+  .brand-tagline {
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+  }
+}
+
+/* Special Effects */
+.logo-container::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  background: linear-gradient(45deg, #667eea, #764ba2, #ff6b6b, #ee5a24);
+  background-size: 400% 400%;
+  border-radius: 20px;
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+  animation: gradient-shift 8s ease infinite;
+}
+
+.logo-container:hover::before {
+  opacity: 0.1;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

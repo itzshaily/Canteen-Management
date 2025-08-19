@@ -39,3 +39,12 @@ const SummaryComponent = ({ data, title }) => {
 };
 
 export default SummaryComponent;
+
+
+// This component summarizes profit data clearly by product with calculated percentages.
+
+//Ideal for showing profit distribution in weekly, monthly, or yearly views.
+
+//Uses Bootstrap styles for mobile-friendly, clean tables.
+
+//Stateless and fully controlled by props: easy to reuse with any numeric data array.

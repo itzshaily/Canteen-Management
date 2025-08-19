@@ -201,3 +201,13 @@ const OrderHistory = () => {
 };
 
 export default OrderHistory;
+
+
+
+// OrderHistory displays all historical orders in an interactive, user-friendly table.
+
+//Supports live search, column sorting, and detailed item breakdown.
+
+//Data is live-synced from Firebase, showing the latest at all times.
+
+//Designed for admin or user dashboards, easily reused and customized.
